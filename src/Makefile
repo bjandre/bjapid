@@ -8,6 +8,7 @@ OBJS = \
 	$(SRCS:%.c=%.o)
 
 LIB = libbjautil.a
+DYLIB = libbjautil.A.dylib
 
 TEST_PID_SRCS = test-pid.c
 TEST_PID_OBJS = $(TEST_PID_SRCS:%.c=%.o)
@@ -19,6 +20,10 @@ CMOCKA_LIBRARY = $(THIRD_PARTY_DIR)/build-Debug/lib/libcmocka.a
 
 CC = cc
 CFLAGS = -std=c11 -g -I$(CMOCKA_INCLUDE_DIR)
+AR = ar
+ARFLAGS = rv
+LIBTOOL = libtool
+LIBTOOLFLAGS = -dynamic -macosx_version_min 10.11 -lSystem
 
 #
 # Generic rule to generate objects
@@ -26,18 +31,24 @@ CFLAGS = -std=c11 -g -I$(CMOCKA_INCLUDE_DIR)
 %.o : %.c $(HEADERS)
 	$(CC) $(CFLAGS) -c -o $@ $<
 
+%.o : %.c $(HEADERS)
+	$(CC) $(CFLAGS) -c -o $@ $<
+
 
 $(LIB) : $(OBJS)
 	$(AR) $(ARFLAGS) $@ $(OBJS)
 
-pid.test : $(TEST_PID_OBJS) $(LIB)
+$(DYLIB) : $(OBJS)
+	$(LIBTOOL) $(LIBTOOLFLAGS) -o $@ $(OBJS)
+
+$(TEST_PID_EXE) : $(TEST_PID_OBJS) $(LIB)
 	$(CC) $(CMOCKA_LIBRARY) $(TEST_PID_OBJS) $(LIB) -o $@
 
-all : $(LIB)
+all : $(LIB) $(DYLIB)
 
 test : $(LIB) $(TEST_PID_EXE)
 	./$(TEST_PID_EXE)
 
 clean :
-	rm -rf *~ *.o $(LIB) $(TEST_PID_EXE)
+	rm -rf *~ *.o $(LIB) $(DYLIB) $(TEST_PID_EXE)
 

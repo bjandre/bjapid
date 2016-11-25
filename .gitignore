@@ -9,6 +9,7 @@
 *.elf
 *.hex
 *.a
+*.dylib
 
 # convention for unit tests
 *.test
