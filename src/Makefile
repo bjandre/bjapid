@@ -11,10 +11,11 @@ LIB = libbjautil.a
 
 TEST_PID_SRCS = test-pid.c
 TEST_PID_OBJS = $(TEST_PID_SRCS:%.c=%.o)
-TEST_PID_EXE = test-pid
+TEST_PID_EXE = pid.test
 
-CMOCKA_INCLUDE_DIR=../../3rd-party/build-Debug/include
-CMOCKA_LIBRARY=../../3rd-party/build-Debug/lib/libcmocka.a
+THIRD_PARTY_DIR = ../3rd-party
+CMOCKA_INCLUDE_DIR = $(THIRD_PARTY_DIR)/build-Debug/include
+CMOCKA_LIBRARY = $(THIRD_PARTY_DIR)/build-Debug/lib/libcmocka.a
 
 CC = cc
 CFLAGS = -std=c11 -g -I$(CMOCKA_INCLUDE_DIR)
@@ -29,13 +30,13 @@ CFLAGS = -std=c11 -g -I$(CMOCKA_INCLUDE_DIR)
 $(LIB) : $(OBJS)
 	$(AR) $(ARFLAGS) $@ $(OBJS)
 
-test-pid : $(TEST_PID_OBJS) $(LIB)
+pid.test : $(TEST_PID_OBJS) $(LIB)
 	$(CC) $(CMOCKA_LIBRARY) $(TEST_PID_OBJS) $(LIB) -o $@
 
 all : $(LIB)
 
 test : $(LIB) $(TEST_PID_EXE)
-	./test-pid
+	./$(TEST_PID_EXE)
 
 clean :
 	rm -rf *~ *.o $(LIB) $(TEST_PID_EXE)

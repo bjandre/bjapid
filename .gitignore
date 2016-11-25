@@ -4,11 +4,14 @@
 # python
 *.pyc
 
-# compiler
+# compiler build artifacts
 *.o
 *.elf
 *.hex
 *.a
+
+# convention for unit tests
+*.test
 
 # kicad files
 *.bak
@@ -21,9 +24,10 @@
 *cache*
 
 # 3rd party library builds
-esp8266/esptool
+3rd-party/build-*
 
 # build artifacts
+esp8266/esptool
 esp8266/env
 esp8266/espressif-at-image.bin
 esp8266/micropython-vagrant/.vagrant
