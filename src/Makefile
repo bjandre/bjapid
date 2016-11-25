@@ -50,5 +50,5 @@ test : $(LIB) $(TEST_PID_EXE)
 	./$(TEST_PID_EXE)
 
 clean :
-	rm -rf *~ *.o $(LIB) $(DYLIB) $(TEST_PID_EXE)
+	rm -rf *~ *.o *.pyc __pycache__/ $(LIB) $(DYLIB) $(TEST_PID_EXE)
 

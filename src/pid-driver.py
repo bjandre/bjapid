@@ -1,7 +1,11 @@
 #!/usr/bin/env python3
 """driver for testing pid controller.
 
-Author: Ben Andre <bjandre@gmail.com>
+Copyright (c) 2016 Benjamin J. Andre
+
+This Source Code Form is subject to the terms of the Mozilla Public
+License, v.  2.0. If a copy of the MPL was not distributed with this
+file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 """
 
@@ -11,18 +15,9 @@ Author: Ben Andre <bjandre@gmail.com>
 #
 import argparse
 import configparser
-import ctypes
 import os
 import sys
 import traceback
-
-if sys.hexversion < 0x02070000:
-    print(70 * "*")
-    print("ERROR: {0} requires python >= 2.7.x. ".format(sys.argv[0]))
-    print("It appears that you are running python {0}".format(
-        ".".join(str(x) for x in sys.version_info[0:3])))
-    print(70 * "*")
-    sys.exit(1)
 
 #
 # installed dependencies
@@ -31,7 +26,16 @@ if sys.hexversion < 0x02070000:
 #
 # other modules in this package
 #
-bjautil = ctypes.cdll.LoadLibrary('libbjautil.A.dylib')
+from pid import PID
+
+
+if sys.hexversion < 0x03050000:
+    print(70 * "*")
+    print("ERROR: {0} requires python >= 3.5.x. ".format(sys.argv[0]))
+    print("It appears that you are running python {0}".format(
+        ".".join(str(x) for x in sys.version_info[0:3])))
+    print(70 * "*")
+    sys.exit(1)
 
 
 # -------------------------------------------------------------------------------
@@ -81,41 +85,6 @@ def read_config_file(filename):
 # work functions
 #
 # -------------------------------------------------------------------------------
-def pid_init(history_length, setpoint, Kp, Ki, Kd):
-    """
-    """
-    history_length_c = ctypes.c_uint8(history_length)
-    setpoint_c = ctypes.c_float(setpoint)
-    Kp_c = ctypes.c_float(Kp)
-    Ki_c = ctypes.c_float(Ki)
-    Kd_c = ctypes.c_float(Kd)
-
-    bjautil.pid_init.restype = ctypes.c_void_p
-    bjautil.pid_init.argtypes = [
-        ctypes.c_uint8, ctypes.c_float,
-        ctypes.c_float, ctypes.c_float, ctypes.c_float, ]
-
-    pid = ctypes.c_void_p(bjautil.pid_init(history_length_c, setpoint_c,
-                                           Kp_c, Ki_c, Kd_c))
-
-    return pid
-
-
-def pid_control(pid, process_value, delta_time):
-    """
-    """
-    process_value_c = ctypes.c_float(90.0)
-    delta_time_c = ctypes.c_float(1.0)
-
-    bjautil.pid_control.restype = ctypes.c_float
-    bjautil.pid_control.argstypes = [
-        ctypes.c_void_p, ctypes.c_float, ctypes.c_float, ]
-
-    control = bjautil.pid_control(pid, process_value_c, delta_time_c)
-
-    return control
-
-
 # -------------------------------------------------------------------------------
 #
 # main
@@ -131,13 +100,11 @@ def main(options):
     Ki = 0.0
     Kd = 0.0
 
-    pid = pid_init(history_length, setpoint, Kp, Ki, Kd)
-
-    print("&pid = {0}".format(pid))
+    pid = PID(history_length, setpoint, Kp, Ki, Kd)
 
     process_value = 90.0
     delta_time = 1.0
-    control = pid_control(pid, process_value, delta_time)
+    control = pid.control(process_value, delta_time)
     print("control = {0}".format(control))
 
     return 0

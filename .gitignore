@@ -3,6 +3,7 @@
 
 # python
 *.pyc
+__pycache__/
 
 # compiler build artifacts
 *.o
