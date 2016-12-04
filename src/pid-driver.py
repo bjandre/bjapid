@@ -15,6 +15,7 @@ file, You can obtain one at http://mozilla.org/MPL/2.0/.
 #
 import argparse
 import configparser
+import math
 import os
 import sys
 import traceback
@@ -23,10 +24,11 @@ import traceback
 # installed dependencies
 #
 
+
 #
 # other modules in this package
 #
-from pid import PID
+from demo_tank import DrainingTankDemo
 
 
 if sys.hexversion < 0x03050000:
@@ -57,8 +59,11 @@ def commandline_options():
     parser.add_argument('--debug', action='store_true',
                         help='extra debugging output')
 
-    parser.add_argument('--config', nargs=1, required=False,
+    parser.add_argument('--config', nargs=1, required=True,
                         help='path to config file')
+
+    parser.add_argument('--write-template', action='store_true',
+                        help='write a template configuration file')
 
     options = parser.parse_args()
     return options
@@ -74,10 +79,81 @@ def read_config_file(filename):
     if not os.path.isfile(cfg_file):
         raise RuntimeError("Could not find config file: {0}".format(cfg_file))
 
-    config = configparser()
+    config = configparser.ConfigParser()
     config.read(cfg_file)
-
+    check_config_file(config)
     return config
+
+
+def write_template_config_file():
+    """
+    """
+    template = configparser.ConfigParser()
+
+    section = 'process'
+    template.add_section(section)
+    template.set(section, 'type', 'string')
+    template.set(section, 'initial_condition', 'float')
+    template.set(section, 'set_point', 'float')
+
+    section = 'forcing'
+    template.add_section(section)
+    template.set(section, 'type', 'string: constant, normal')
+    template.set(section, 'mean', 'float')
+    template.set(section, 'standard_deviation', 'float')
+
+    section = 'time'
+    template.add_section(section)
+    template.set(section, 'delta', 'float')
+    template.set(section, 'max', 'float')
+
+    section = 'control'
+    template.add_section(section)
+    template.set(section, 'delta', 'float')
+    template.set(section, 'history_length', 'int > 0')
+    template.set(section, 'control_bias', 'float or "calculate"')
+    template.set(section, 'Kp', 'float or "calculate"')
+    template.set(section, 'Ki', 'float')
+    template.set(section, 'Kd', 'float')
+
+    with open('template.cfg', 'wb') as configfile:
+        template.write(configfile)
+
+
+def check_config_file(config):
+    """Check the configuration file for required sections and options.
+    """
+    section = 'process'
+    options = ['type', 'initial_condition', 'set_point', ]
+    check_config_required_options(config, section, options)
+
+    # NOTE(bja, 2016-11) standard_deviation isn't always required, so
+    # we can't check it here. Adding a sinusoidal would add amplitude,
+    # phase and frequency...
+    section = 'forcing'
+    options = ['type', 'mean', ]
+    check_config_required_options(config, section, options)
+
+    section = 'time'
+    options = ['delta', 'max', ]
+    check_config_required_options(config, section, options)
+
+    # NOTE(bja, 2016-11) right now, we either assign a float or
+    # 'calculate' to control_bias and Kp. More robust with a fallback
+    # of None and then try to compute...?
+    section = 'control'
+    options = ['delta', 'history_length', 'control_bias', 'Kp', 'Ki', 'Kd', ]
+    check_config_required_options(config, section, options)
+
+
+def check_config_required_options(config, section, options):
+    """
+    """
+    for opt in options:
+        if not config.has_option(section, opt):
+            message = ("ERROR: Input file must have section '{0}' with"
+                       "option '{1}'".format(section, opt))
+            raise RuntimeError(message)
 
 
 # -------------------------------------------------------------------------------
@@ -85,15 +161,10 @@ def read_config_file(filename):
 # work functions
 #
 # -------------------------------------------------------------------------------
-# -------------------------------------------------------------------------------
-#
-# main
-#
-# -------------------------------------------------------------------------------
-def main(options):
-    if options.config:
-        config = read_config_file(options.config[0])
-
+def test_pid_wrapper():
+    """
+    """
+    from pid import PID
     history_length = 5
     setpoint = 100.0
     Kp = 1.5
@@ -106,6 +177,23 @@ def main(options):
     delta_time = 1.0
     control = pid.control(process_value, delta_time)
     print("control = {0}".format(control))
+
+# -------------------------------------------------------------------------------
+#
+# main
+#
+# -------------------------------------------------------------------------------
+def main(options):
+    if options.config:
+        config = read_config_file(options.config[0])
+
+    process_type = config["process"]["type"]
+    if process_type == "tank":
+        process = DrainingTankDemo(config)
+    else:
+        raise RuntimeError("Unknown ")
+
+    process.run()
 
     return 0
 

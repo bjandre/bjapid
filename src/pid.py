@@ -20,7 +20,7 @@ import traceback
 #
 # other modules in this package
 #
-bjautil = ctypes.cdll.LoadLibrary('libbjautil.A.dylib')
+bjapid = ctypes.cdll.LoadLibrary('libbjapid.A.dylib')
 
 if sys.hexversion < 0x03050000:
     print(70 * "*")
@@ -60,22 +60,22 @@ class PID(object):
         Ki_c = ctypes.c_float(Ki)
         Kd_c = ctypes.c_float(Kd)
 
-        pid = bjautil.pid_init(history_length_c, setpoint_c,
+        pid = bjapid.pid_init(history_length_c, setpoint_c,
                                Kp_c, Ki_c, Kd_c)
 
         self._pid = ctypes.c_void_p(pid)
-        print("&pid = {0}".format(self._pid))
+        # print("&pid = {0}".format(self._pid))
 
     def _pid_prototypes(self):
         """set all the wrapper function prototypes
         """
-        bjautil.pid_init.restype = ctypes.c_void_p
-        bjautil.pid_init.argtypes = [
+        bjapid.pid_init.restype = ctypes.c_void_p
+        bjapid.pid_init.argtypes = [
             ctypes.c_uint8, ctypes.c_float,
             ctypes.c_float, ctypes.c_float, ctypes.c_float, ]
 
-        bjautil.pid_control.restype = ctypes.c_float
-        bjautil.pid_control.argstypes = [
+        bjapid.pid_control.restype = ctypes.c_float
+        bjapid.pid_control.argstypes = [
             ctypes.c_void_p, ctypes.c_float, ctypes.c_float, ]
 
     def control(self, process_value, delta_time):
@@ -95,7 +95,7 @@ class PID(object):
         process_value_c = ctypes.c_float(process_value)
         delta_time_c = ctypes.c_float(delta_time)
 
-        control = bjautil.pid_control(self._pid, process_value_c, delta_time_c)
+        control = bjapid.pid_control(self._pid, process_value_c, delta_time_c)
 
         return control
 

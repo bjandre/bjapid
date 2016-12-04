@@ -7,8 +7,8 @@ SRCS = \
 OBJS = \
 	$(SRCS:%.c=%.o)
 
-LIB = libbjautil.a
-DYLIB = libbjautil.A.dylib
+LIB = libbjapid.a
+DYLIB = libbjapid.A.dylib
 
 TEST_PID_SRCS = test-pid.c
 TEST_PID_OBJS = $(TEST_PID_SRCS:%.c=%.o)
@@ -43,6 +43,10 @@ $(DYLIB) : $(OBJS)
 
 $(TEST_PID_EXE) : $(TEST_PID_OBJS) $(LIB)
 	$(CC) $(CMOCKA_LIBRARY) $(TEST_PID_OBJS) $(LIB) -o $@
+
+staticlib : $(LIB)
+
+dylib : $(DYLIB)
 
 all : $(LIB) $(DYLIB)
 
